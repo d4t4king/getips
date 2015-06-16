@@ -42,13 +42,13 @@ opts.each do |opt,arg|
 	when '--iptables'
 		ipt = true
 	when '--all'
-		if !arg.nil? && arg != ''
+		if ! arg.nil? && arg != ''
 			web = arg
 		else
 			web = true
 		end
 		ipt = true
-		if ! arg.nil && arg != ''
+		if ! arg.nil? && arg != ''
 			all = arg
 		else
 			all = true
@@ -78,7 +78,7 @@ def gatherIPsFromWeb(svr_type)
 			File.open('/var/log/nginx/access.log').each_line do |line|
 				line.chomp!
 				ip = line.split(' ')[0]
-				next if /::?/		# skip IPv6 addresses
+				next if ip =~ /::?/		# skip IPv6 addresses
 				unless ips.has_key? ip
 					ips[ip] = 1
 				else
