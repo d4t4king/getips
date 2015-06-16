@@ -7,6 +7,7 @@ opts = GetoptLong.new(
 	[ '--help', '-h', GetoptLong::NO_ARGUMENT ],
 	[ '--web', '-w', GetoptLong::OPTIONAL_ARGUMENT ],
 	[ '--iptables', '-i', GetoptLong::NO_ARGUMENT ],
+	[ '--out', '-o', GetoptLong::REQUIRED_ARGUMENT ],
 	[ '--all', '-a', GetoptLong::OPTIONAL_ARGUMENT ]
 )
 
@@ -25,12 +26,15 @@ getips [OPTIONS]
 
 -a, --all:
 	search both options above
+
+-o, --out:
+	REQUIRED: output file path/name
 EOF
 
 	exit 1
 end
 
-web = nil; ipt = nil; all = nil
+web = nil; ipt = nil; all = nil; out = nil
 opts.each do |opt,arg|
 	case opt
 	when '--web'
@@ -53,12 +57,19 @@ opts.each do |opt,arg|
 		else
 			all = true
 		end
+	when '--out'
+		out = arg
 	when '--help'
 		usage
 	end
 end
 
 if ! web && ! ipt && ! all
+	usage
+end
+
+if out.nil? || out == ''
+	raise "Need output file!".red
 	usage
 end
 
@@ -137,3 +148,10 @@ if all
 end
 
 puts "Found #{ips2scan.keys.length} ips to scan.".yellow
+File.open(out, 'w') do |file|
+	ips2scan.keys.sort.each do |key|
+		file.puts(key)
+	end
+end
+
+
