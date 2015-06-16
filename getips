@@ -10,6 +10,26 @@ opts = GetoptLong.new(
 	[ '--all', '-a', GetoptLong::OPTIONAL_ARGUMENT ]
 )
 
+def usage()
+	puts <<-EOF
+getips [OPTIONS]
+
+-h, --help:
+	show help
+
+-w, --web:
+	search for IPs in web server logs
+
+-i, --iptables:
+	search for IPs from iptables deny logs (syslog, messages)
+
+-a, --all:
+	search both options above
+EOF
+
+	exit 1
+end
+
 web = nil; ipt = nil; all = nil
 opts.each do |opt,arg|
 	case opt
@@ -29,43 +49,65 @@ opts.each do |opt,arg|
 		end
 		ipt = true
 		if ! arg.nil && arg != ''
-		all = true
+			all = arg
+		else
+			all = true
+		end
 	when '--help'
-		puts <<-EOF
-getips [OPTIONS]
-
--h, --help:
-	show help
-
--w, --web:
-	search for IPs in web server logs
-
--i, --iptables:
-	search for IPs from iptables deny logs (syslog, messages)
-
--a, --all:
-	search both options above
-EOF
+		usage
 	end
 end
 
-def gatherIPsFromWeb()
-	puts "Will gather from web logs.".green
+if ! web && ! ipt && ! all
+	usage
+end
+
+def gatherIPsFromWeb(svr_type)
+	puts "Will gather from web logs from #{svr_type}.".green
+	ips = Hash.new
+	case svr_type
+	when /apache/
+		if File.exists? '/var/log/apache*/access_log'
+			puts "Found access log (a).".green
+		else
+			puts "Cannot find access log (a).".red
+		end
+	when /nginx/
+		if File.exists? '/var/log/nginx/access.log'
+			puts "Found access log (n).".green
+			File.open('/var/log/nginx/access.log').each_line do |line|
+				line.chomp!
+				ip = line.split(' ')[0]
+				next if /::?/		# skip IPv6 addresses
+				unless ips.has_key? ip
+					ips[ip] = 1
+				else
+					ips[ip] += 1
+				end
+			end		
+		else
+			puts "Cannot find access log (n).".red
+		end
+		return ips
+	end
 end
 
 def gatherFromIptables()
 	puts "Will gather from system logs (iptables).".blue
 end
 
+ips2scan = Hash.new
 if web && ! all
-	gatherIPsFromWeb
+	ips2scan = gatherIPsFromWeb web
 end
 
 if ipt && ! all
-	gatherFromIptables
+	ips2scan = gatherFromIptables
 end
 
 if all
-	gatherIPsFromWeb
-	gatherFromIptables
+	ips2scan = gatherIPsFromWeb web
+	ips2scan.merge! gatherFromIptables
 end
+
+puts "Found #{ips2scan.keys.length} ips to scan.".yellow
