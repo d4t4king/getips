@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'getoptlong'
+
+opts = GetoptLong.new(
+	[ '--help', '-h', GetoptLong::NO_ARGUMENT ],
+	[ '--web', '-w', GetoptLong::OPTIONAL_ARGUMENT ],
+	[ '--iptables', '-i', GetoptLong::NO_ARGUMENT ],
+	[ '--all', '-a', GetoptLong::OPTIONAL_ARGUMENT ]
+)
+
+web = nil; ipt = nil; all = nil
+opts.each do |opt,arg|
+	case opt
+	when '--web'
+		if !arg.nil? && arg != ''
+			web = arg
+		else
+			web = true
+		end
+	when '--iptables'
+		ipt = true
+	when '--all'
+		if !arg.nil? && arg != ''
+			web = arg
+		else
+			web = true
+		end
+		ipt = true
+		if ! arg.nil && arg != ''
+		all = true
+	when '--help'
+		puts <<-EOF
+getips [OPTIONS]
+
+-h, --help:
+	show help
+
+-w, --web:
+	search for IPs in web server logs
+
+-i, --iptables:
+	search for IPs from iptables deny logs (syslog, messages)
+
+-a, --all:
+	search both options above
+EOF
+	end
+end
+
+def gatherIPsFromWeb()
+	puts "Will gather from web logs.".green
+end
+
+def gatherFromIptables()
+	puts "Will gather from system logs (iptables).".blue
+end
+
+if web && ! all
+	gatherIPsFromWeb
+end
+
+if ipt && ! all
+	gatherFromIptables
+end
+
+if all
+	gatherIPsFromWeb
+	gatherFromIptables
+end
