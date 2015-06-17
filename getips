@@ -78,8 +78,19 @@ def gatherIPsFromWeb(svr_type)
 	ips = Hash.new
 	case svr_type
 	when /apache/
-		if File.exists? '/var/log/apache*/access_log'
+		if Dir.glob "/var/log/apache*/access_log"
 			puts "Found access log (a).".green
+			logfile = Dir.glob("/var/log/apache*/access_log")[0]
+			File.open(logfile).each_line do |line|
+				line.chomp!
+				ip = line.split(' ')[0]
+				next if ip =~ /::?/			# skip IPv6 address
+				unless ips.has_key? ip
+					ips[ip] = 1
+				else
+					ips[ip] += 1
+				end
+			end
 		else
 			puts "Cannot find access log (a).".red
 		end
@@ -99,8 +110,8 @@ def gatherIPsFromWeb(svr_type)
 		else
 			puts "Cannot find access log (n).".red
 		end
-		return ips
 	end
+	return ips
 end
 
 def gatherFromIptables()
