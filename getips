@@ -123,14 +123,27 @@ def gatherFromIptables()
 				end
 			end
 		end
-		return ips
-	else
-		logfile = '/var/log/messages'
-		if File.exists? logfile
-			out = open(logfile).grep(/SRC=/)
-			puts out.to_s.magenta
+	end
+	logfile = '/var/log/messages'
+	if File.exists? logfile
+		out = open(logfile).grep(/SRC=/)
+		#puts out.to_s.magenta
+		if ! out.nil? && out.to_s != ''
+			File.open(logfile).each_line do |line|
+				line.chomp!
+				if line =~ /SRC=(\d+\.\d+\.\d+\.\d+)/
+					ip = $1
+					next if ip == '127.0.0.1'
+					unless ips.has_key? ip
+						ips[ip] = 1
+					else
+						ips[ip] += 1
+					end
+				end
+			end
 		end
 	end
+	return ips
 end
 
 ips2scan = Hash.new
