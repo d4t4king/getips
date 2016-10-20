@@ -1,7 +1,21 @@
 ---
 engines:
+  bundler-audit:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - ruby
   fixme:
     enabled: true
+  rubcop:
+    enabled: true
 ratings:
-  paths: []
-exclude_paths: []
+  paths: 
+    - "**.rb"
+    - "getips"
+exclude_paths:
+  - ".rvmrc"
+  - "**.swp"
+  - "**~"
