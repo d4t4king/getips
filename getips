@@ -134,14 +134,16 @@ def gatherFromIptables()
 				end
 			end
 		end
-		return ips
-	else
-		logfile = '/var/log/messages'
-		if File.exists? logfile
-			out = open(logfile).grep(/SRC=/)
-			puts out.to_s.magenta
-		end
 	end
+	logfile = '/var/log/messages'
+	if File.exists? logfile
+		out = open(logfile).grep(/SRC=/)
+		puts out.to_s.magenta
+	end
+	if ips.nil? or ips.keys.length == 0
+		raise "No IPs found in system logs.".red
+	end
+	return ips
 end
 
 ips2scan = Hash.new
